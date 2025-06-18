@@ -1,46 +1,45 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/Haepapa/sas-lineage/internal/model"
-	"github.com/Haepapa/sas-lineage/internal/parser/egp"
-	"github.com/Haepapa/sas-lineage/internal/parser/sas"
-	"github.com/Haepapa/sas-lineage/internal/utils/exporter"
-	"github.com/Haepapa/sas-lineage/internal/utils/filewalker"
-	"github.com/google/uuid"
+	"github.com/Haepapa/sas-lineage/internal/parser"
+	"github.com/Haepapa/sas-lineage/internal/types"
+	"github.com/Haepapa/sas-lineage/internal/utils"
 )
 
 func main() {
-    root := os.Args[1]
-    paths, _ := filewalker.FindSASFiles(root)
-    var nodes []model.Node
-    var links []model.Link
+    var nodes []types.Node
+    var links []types.Link
+	var tempDir string
+	flag.StringVar(&tempDir, "temp-dir", "", "Base directory to extract temporary EGP contents")
+	flag.StringVar(&tempDir, "t", "", "Base directory to extract temporary EGP contents (shorthand)")
+	flag.Parse()
 
-    for _, p := range paths {
-        if strings.HasSuffix(p, ".egp") {
-            temp, _ := egp.ExtractEGP(p)
-            // Process extracted files recursively
-        } else if strings.HasSuffix(p, ".sas") {
-            inputs, outputs := sas.ParseSASCode(p)
-            // Add node for the script
-            scriptNode := model.Node{ID: uuid.New().String(), Type: "script", Name: filepath.Base(p), Location: p}
-            nodes = append(nodes, scriptNode)
+	if flag.NArg() < 1 {
+		fmt.Println("Usage: sas-lineage [--temp-dir path] root_path")
+		os.Exit(1)
+	}
 
-            for _, in := range inputs {
-                inNode := model.Node{ID: in, Type: "dataset", Name: in, Location: ""}
-                nodes = append(nodes, inNode)
-                links = append(links, model.Link{Source: inNode.ID, Target: scriptNode.ID, Type: "reads"})
-            }
-            for _, out := range outputs {
-                outNode := model.Node{ID: out, Type: "dataset", Name: out, Location: ""}
-                nodes = append(nodes, outNode)
-                links = append(links, model.Link{Source: scriptNode.ID, Target: outNode.ID, Type: "writes"})
-            }
-        }
-    }
+	root := flag.Arg(0)
+	if tempDir == "" {
+		tempDir = root
+	}
+	paths, _ := utils.FindSASFiles(root)
 
-    exporter.ExportLineage(nodes, links, "./output")
+	for _, p := range paths {
+		if strings.HasSuffix(p, ".egp") {
+			fmt.Printf("Processing EGP file: %s\n\n", p)
+			if err := parser.ExtractEGP(p, tempDir, &nodes, &links); err != nil {
+				fmt.Printf("Error extracting EGP file: %s\n", err)
+				continue
+			}
+		} else if strings.HasSuffix(p, ".sas") {
+			fmt.Printf("Processing SAS file: %s\n\n", p)
+		}
+	}
+    utils.ExportLineage(nodes, links, "./output")
 }
