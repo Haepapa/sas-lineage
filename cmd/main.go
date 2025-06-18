@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -32,13 +33,17 @@ func main() {
 
 	for _, p := range paths {
 		if strings.HasSuffix(p, ".egp") {
-			fmt.Printf("Processing EGP file: %s\n\n", p)
+			log.Printf("Processing EGP file: %s\n", p)
 			if err := parser.ExtractEGP(p, tempDir, &nodes, &links); err != nil {
-				fmt.Printf("Error extracting EGP file: %s\n", err)
+				log.Printf("Error extracting EGP file: %s\n", err)
 				continue
 			}
 		} else if strings.HasSuffix(p, ".sas") {
-			fmt.Printf("Processing SAS file: %s\n\n", p)
+			log.Printf("Processing SAS file: %s\n\n", p)
+			if err := parser.ParseSASCode(p, &nodes, &links, ""); err != nil {
+				log.Printf("Error parsing SAS file: %s\n", err)
+				continue
+			}
 		}
 	}
     utils.ExportLineage(nodes, links, "./output")

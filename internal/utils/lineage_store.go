@@ -18,7 +18,7 @@ func GetOrCreateNodeID(nodes *[]types.Node, node types.Node) string {
 
 func AppendUniqueLink(links *[]types.Link, link types.Link) {
 	for _, l := range *links {
-		if l.LeftNodeID == link.LeftNodeID && l.RightNodeID == link.RightNodeID && l.Label == link.Label {
+		if l.LeftNodeId == link.LeftNodeId && l.RightNodeId == link.RightNodeId && l.Label == link.Label {
 			return
 		}
 	}

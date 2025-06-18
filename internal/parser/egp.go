@@ -65,7 +65,7 @@ func ExtractEGP(path string, baseTempDir string, nodes *[]types.Node, links *[]t
 	subPaths, _ := utils.FindSASFiles(tempDir)
 	for _, sp := range subPaths {
 		if strings.HasSuffix(sp, ".sas") {
-			err := ParseSASCode(sp, nodes, links)
+			err := ParseSASCode(sp, nodes, links, path)
 			if err != nil {
 				return err
 			}

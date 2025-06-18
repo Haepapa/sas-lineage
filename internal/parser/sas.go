@@ -2,8 +2,8 @@ package parser
 
 import (
 	"os"
-	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/Haepapa/sas-lineage/internal/types"
 	"github.com/Haepapa/sas-lineage/internal/utils"
@@ -13,65 +13,89 @@ import (
 var inputRe = regexp.MustCompile(`(?i)set\s+([a-zA-Z0-9_.]+)`)
 var outputRe = regexp.MustCompile(`(?i)data\s+([a-zA-Z0-9_.]+)`)
 
-func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link) error {
+func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGName string) error {
     b, err := os.ReadFile(path)
     if err != nil {
         return err
     }
     text := string(b)
+
+    ignoreOutputNames := map[string]bool{
+        "_null_": true,
+    }
+
+    blockCommentRe := regexp.MustCompile(`(?s)/\*.*?\*/`)
+    text = blockCommentRe.ReplaceAllString(text, "")
+
+    lineCommentRe := regexp.MustCompile(`(?m)^\s*\*.*?;`)
+    text = lineCommentRe.ReplaceAllString(text, "")
+
     var inputs []string
     var outputs []string
     for _, match := range inputRe.FindAllStringSubmatch(text, -1) {
         inputs = append(inputs, match[1])
     }
     for _, match := range outputRe.FindAllStringSubmatch(text, -1) {
-        outputs = append(outputs, match[1])
+        name := strings.ToLower(match[1])
+        if !ignoreOutputNames[name] {
+            outputs = append(outputs, match[1])
+        }
     }
     scriptID := utils.GetOrCreateNodeID(nodes, types.Node{
-        Label:     "script",
-        ClassName: filepath.Base(path),
+        Label:     func() string {
+            if sasEGName != "" {
+                return sasEGName
+            }
+            return path
+        }(),
+        ClassName: func() string {
+            if sasEGName != "" {
+                return "sas-egp"
+            }
+            return "sas-script"
+        }(),
         Shape:     "rectangle",
-        SizeX:     "100",
-        SizeY:     "60",
-        X:         "150",
-        Y:         "150",
+        SizeX:     100,
+        SizeY:     60,
+        X:         150,
+        Y:         150,
     })
     for _, in := range inputs {
         dataID := utils.GetOrCreateNodeID(nodes, types.Node{
-            Label:     "dataset",
-            ClassName: in,
+            Label:     in,
+            ClassName: "sas-dataset",
             Shape:     "circle",
-            SizeX:     "80",
-            SizeY:     "80",
-            X:         "150",
-            Y:         "150",
+            SizeX:     80,
+            SizeY:     80,
+            X:         150,
+            Y:         150,
         })
         utils.AppendUniqueLink(links, types.Link{
             ID:          uuid.New().String(),
             Label:       "reads",
-            ClassName:   "",
+            ClassName:   "reads",
             Direction:   "left-to-right",
-            LeftNodeID:  dataID,
-            RightNodeID: scriptID,
+            LeftNodeId:  dataID,
+            RightNodeId: scriptID,
         })
     }
     for _, out := range outputs {
         dataID := utils.GetOrCreateNodeID(nodes, types.Node{
-            Label:     "dataset",
-            ClassName: out,
+            Label:     out,
+            ClassName: "sas-dataset",
             Shape:     "circle",
-            SizeX:     "80",
-            SizeY:     "80",
-            X:         "150",
-            Y:         "150",
+            SizeX:     80,
+            SizeY:     80,
+            X:         150,
+            Y:         150,
         })
         utils.AppendUniqueLink(links, types.Link{
             ID:          uuid.New().String(),
             Label:       "writes",
-            ClassName:   "",
+            ClassName:   "writes",
             Direction:   "left-to-right",
-            LeftNodeID:  scriptID,
-            RightNodeID: dataID,
+            LeftNodeId:  scriptID,
+            RightNodeId: dataID,
         })
     }
     return nil
