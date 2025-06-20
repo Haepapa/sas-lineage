@@ -42,23 +42,15 @@ func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGNa
         }
     }
     scriptID := utils.GetOrCreateNodeID(nodes, types.Node{
-        Label:     func() string {
+        Label: "label",
+        Name:     func() string {
             if sasEGName != "" {
                 return sasEGName
             }
             return path
         }(),
-        ClassName: func() string {
-            if sasEGName != "" {
-                return "sas-egp"
-            }
-            return "sas-script"
-        }(),
-        Shape:     "rectangle",
-        SizeX:     100,
-        SizeY:     60,
-        X:         150,
-        Y:         150,
+        Fill:     "#e66557",
+        Size:     10,
         Type: func() string {
             if sasEGName != "" {
                 return "SAS Enterprise Guide"
@@ -68,42 +60,32 @@ func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGNa
     })
     for _, in := range inputs {
         dataID := utils.GetOrCreateNodeID(nodes, types.Node{
-            Label:     in,
-            ClassName: "sas-dataset",
-            Shape:     "circle",
-            SizeX:     80,
-            SizeY:     80,
-            X:         150,
-            Y:         150,
+            Label:     "sas-dataset",
+            Name:     in,
+            Fill:     "#5782e6",
+            Size:     10,
             Type:      "SAS Dataset",
         })
         utils.AppendUniqueLink(links, types.Link{
             ID:          uuid.New().String(),
             Label:       "reads",
-            ClassName:   "reads",
-            Direction:   "left-to-right",
-            LeftNodeId:  dataID,
-            RightNodeId: scriptID,
+            Source:     dataID,
+            Target:     scriptID,
         })
     }
     for _, out := range outputs {
         dataID := utils.GetOrCreateNodeID(nodes, types.Node{
-            Label:     out,
-            ClassName: "sas-dataset",
-            Shape:     "circle",
-            SizeX:     80,
-            SizeY:     80,
-            X:         150,
-            Y:         150,
+            Label:     "sas-dataset",
+            Name:     out,
+            Fill:     "#5782e6",
+            Size:     10,
             Type:      "SAS Dataset",
         })
         utils.AppendUniqueLink(links, types.Link{
             ID:          uuid.New().String(),
             Label:       "writes",
-            ClassName:   "writes",
-            Direction:   "left-to-right",
-            LeftNodeId:  scriptID,
-            RightNodeId: dataID,
+            Source:     dataID,
+            Target:     scriptID,
         })
     }
     return nil

@@ -15,6 +15,6 @@ func ExportLineage(nodes []types.Node, links []types.Link, outDir string) error 
     nData, _ := json.MarshalIndent(nodes, "", "  ")
     lData, _ := json.MarshalIndent(links, "", "  ")
     os.WriteFile(filepath.Join(outDir, "nodes.json"), nData, 0644)
-    os.WriteFile(filepath.Join(outDir, "links.json"), lData, 0644)
+    os.WriteFile(filepath.Join(outDir, "edges.json"), lData, 0644)
     return nil
 }

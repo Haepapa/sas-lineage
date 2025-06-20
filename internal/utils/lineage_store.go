@@ -7,7 +7,7 @@ import (
 
 func GetOrCreateNodeID(nodes *[]types.Node, node types.Node) string {
 	for _, n := range *nodes {
-		if n.Label == node.Label && n.ClassName == node.ClassName {
+		if n.Label == node.Label && n.Name == node.Name {
 			return n.ID
 		}
 	}
@@ -18,7 +18,7 @@ func GetOrCreateNodeID(nodes *[]types.Node, node types.Node) string {
 
 func AppendUniqueLink(links *[]types.Link, link types.Link) {
 	for _, l := range *links {
-		if l.LeftNodeId == link.LeftNodeId && l.RightNodeId == link.RightNodeId && l.Label == link.Label {
+		if l.Source == link.Source && l.Target == link.Target && l.Label == link.Label {
 			return
 		}
 	}
