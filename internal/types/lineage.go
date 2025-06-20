@@ -9,6 +9,7 @@ type Node struct {
     SizeY int `json:"sizeY"`
     X int `json:"x"`
     Y int `json:"y"`
+    Type     string `json:"type"`
 }
 
 type Link struct {

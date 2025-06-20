@@ -59,6 +59,12 @@ func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGNa
         SizeY:     60,
         X:         150,
         Y:         150,
+        Type: func() string {
+            if sasEGName != "" {
+                return "SAS Enterprise Guide"
+            }
+            return "SAS Program"
+        }(),
     })
     for _, in := range inputs {
         dataID := utils.GetOrCreateNodeID(nodes, types.Node{
@@ -69,6 +75,7 @@ func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGNa
             SizeY:     80,
             X:         150,
             Y:         150,
+            Type:      "SAS Dataset",
         })
         utils.AppendUniqueLink(links, types.Link{
             ID:          uuid.New().String(),
@@ -88,6 +95,7 @@ func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGNa
             SizeY:     80,
             X:         150,
             Y:         150,
+            Type:      "SAS Dataset",
         })
         utils.AppendUniqueLink(links, types.Link{
             ID:          uuid.New().String(),
