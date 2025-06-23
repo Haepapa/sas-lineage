@@ -12,6 +12,7 @@ import (
 
 var inputRe = regexp.MustCompile(`(?i)set\s+([a-zA-Z0-9_.]+)`)
 var outputRe = regexp.MustCompile(`(?i)data\s+([a-zA-Z0-9_.]+)`)
+var hashDatasetRe = regexp.MustCompile(`(?i)dataset\s*:\s*['"]([a-zA-Z0-9_.]+)['"]`)
 
 func isTemporaryDataset(name string) bool {
 	name = strings.ToLower(name)
@@ -40,6 +41,9 @@ func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGNa
     var inputs []string
     var outputs []string
     for _, match := range inputRe.FindAllStringSubmatch(text, -1) {
+        inputs = append(inputs, match[1])
+    }
+    for _, match := range hashDatasetRe.FindAllStringSubmatch(text, -1) {
         inputs = append(inputs, match[1])
     }
     for _, match := range outputRe.FindAllStringSubmatch(text, -1) {
