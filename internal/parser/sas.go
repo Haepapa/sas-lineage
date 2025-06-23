@@ -13,6 +13,13 @@ import (
 var inputRe = regexp.MustCompile(`(?i)set\s+([a-zA-Z0-9_.]+)`)
 var outputRe = regexp.MustCompile(`(?i)data\s+([a-zA-Z0-9_.]+)`)
 
+func isTemporaryDataset(name string) bool {
+	name = strings.ToLower(name)
+	return strings.HasPrefix(name, "work.") || !strings.Contains(name, ".")
+}
+
+var sizeIncrement = 3
+
 func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGName string) error {
     b, err := os.ReadFile(path)
     if err != nil {
@@ -58,14 +65,34 @@ func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGNa
             return "SAS Program"
         }(),
     })
+
+    nodeIndex := make(map[string]int)
+    for i, node := range *nodes {
+        nodeIndex[node.ID] = i
+    }
+
     for _, in := range inputs {
         dataID := utils.GetOrCreateNodeID(nodes, types.Node{
             Label:     "sas-dataset",
             Name:     in,
-            Fill:     "#5782e6",
+            Fill: func() string {
+                if isTemporaryDataset(in) {
+                    return "#5782e6"
+                }
+                return "#fff194"
+            }(),
             Size:     10,
             Type:      "SAS Dataset",
         })
+        if !isTemporaryDataset(in) {
+            if idx, ok := nodeIndex[dataID]; ok {
+                if (*nodes)[idx].Size == 10 {
+                    (*nodes)[idx].Size = 10 + sizeIncrement
+                } else {
+                    (*nodes)[idx].Size += sizeIncrement
+                }
+            }
+        }
         utils.AppendUniqueLink(links, types.Link{
             ID:          uuid.New().String(),
             Label:       "reads",
@@ -77,15 +104,29 @@ func ParseSASCode(path string, nodes *[]types.Node, links *[]types.Link, sasEGNa
         dataID := utils.GetOrCreateNodeID(nodes, types.Node{
             Label:     "sas-dataset",
             Name:     out,
-            Fill:     "#5782e6",
+            Fill: func() string {
+                if isTemporaryDataset(out) {
+                    return "#5782e6"
+                }
+                return "#fff194"
+            }(),
             Size:     10,
             Type:      "SAS Dataset",
         })
+        if !isTemporaryDataset(out) {
+            if idx, ok := nodeIndex[dataID]; ok {
+                if (*nodes)[idx].Size == 10 {
+                    (*nodes)[idx].Size = 10+ sizeIncrement
+                } else {
+                    (*nodes)[idx].Size += sizeIncrement
+                }
+            }
+        }
         utils.AppendUniqueLink(links, types.Link{
             ID:          uuid.New().String(),
             Label:       "writes",
-            Source:     dataID,
-            Target:     scriptID,
+            Source:     scriptID,
+            Target:     dataID,
         })
     }
     return nil
